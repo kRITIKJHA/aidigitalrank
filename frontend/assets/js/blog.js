@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
   var blogGrid = document.querySelector('.blog-grid');
   if (!blogGrid) return; // Not on the blog page — do nothing
 
-  fetch('http://localhost:3000/api/posts')
+  fetch('https://aidigitalrank.onrender.com/api/posts')
     .then(function (res) {
       return res.json();
     })

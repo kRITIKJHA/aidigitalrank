@@ -1,9 +1,8 @@
 // Contact form handling.
 //
-// There's no backend yet (that's Phase 3 of the project), so this script
-// only validates the form and shows a message. Once the Node.js/Express
-// backend exists, the commented-out fetch() block near the bottom is
-// exactly what will replace the "pretend to submit" logic.
+// Validates the form, then sends the data to our deployed Express + MongoDB
+// backend via fetch(). See server.js's /api/contact route for what happens
+// to this data on the other end.
 
 document.addEventListener('DOMContentLoaded', function () {
   var form = document.getElementById('contact-form');
@@ -65,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
     statusEl.textContent = 'Sending...';
     statusEl.className = 'form-status';
 
-    fetch('http://localhost:3000/api/contact', {
+    fetch('https://aidigitalrank.onrender.com/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
