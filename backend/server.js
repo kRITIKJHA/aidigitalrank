@@ -5,6 +5,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const Contact = require('./models/Contact'); // Our Contact model
 const Post = require('./models/Post'); // Our Post model
+const Newsletter = require('./models/Newsletter'); // Our Newsletter model
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -117,6 +118,30 @@ app.delete('/api/posts/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting post:', err.message);
     res.status(500).json({ success: false, error: 'Could not delete post.' });
+  }
+});
+
+// Newsletter signup — used by the footer form on every page.
+app.post('/api/newsletter', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'Email is required.' });
+  }
+
+  try {
+    await Newsletter.create({ email });
+    res.status(201).json({ success: true, message: "Thanks! You're subscribed." });
+  } catch (err) {
+    // Error code 11000 = MongoDB's "duplicate key" error — meaning this
+    // email already has a document with `unique: true`. We treat this
+    // as a friendly success rather than an error, since from the user's
+    // point of view, "you're already subscribed" isn't really a failure.
+    if (err.code === 11000) {
+      return res.status(200).json({ success: true, message: "You're already subscribed!" });
+    }
+    console.error('Error saving newsletter signup:', err.message);
+    res.status(500).json({ success: false, error: 'Something went wrong. Please try again.' });
   }
 });
 
