@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Manage Blog Posts</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/main.css">
+<style>
+  /* Small admin-only styles, kept separate from the main design system
+     since this page is an internal tool, not part of the public site. */
+  body { padding: 48px 32px; max-width: 720px; margin: 0 auto; }
+  .admin-post { display: flex; justify-content: space-between; align-items: start; gap: 16px; padding: 16px 0; border-top: 1px solid var(--line); }
+  .admin-post:last-child { border-bottom: 1px solid var(--line); }
+  .admin-post h3 { font-size: 17px; font-family: var(--font-body); font-weight: 600; }
+  .admin-post p { margin-top: 6px; font-size: 14px; }
+  .btn-delete { background: none; border: 1px solid #B3261E; color: #B3261E; padding: 6px 14px; border-radius: 3px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+  .btn-delete:hover { background: #B3261E; color: white; }
+</style>
+</head>
+<body>
+
+  <p class="breadcrumb"><a href="/">← Back to site</a></p>
+  <h1 style="margin-top: 24px;">Manage Blog Posts</h1>
+  <p style="color: var(--ink-soft); margin-top: 8px;">⚠️ Internal tool — not linked anywhere on the public site, and not yet password-protected.</p>
+
+  <section style="margin-top: 40px;">
+    <h2 style="font-size: 20px; font-family: var(--font-body); font-weight: 600;">Add a new post</h2>
+    <form id="post-form" style="display: flex; flex-direction: column; gap: 14px; margin-top: 16px;">
+      <div class="form-group">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required>
+      </div>
+      <div class="form-group">
+        <label for="excerpt">Excerpt</label>
+        <textarea id="excerpt" name="excerpt" rows="3" required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" style="align-self: flex-start; border: none; cursor: pointer;">Add post</button>
+      <p id="form-status" class="form-status"></p>
+    </form>
+  </section>
+
+  <section style="margin-top: 48px;">
+    <h2 style="font-size: 20px; font-family: var(--font-body); font-weight: 600;">Existing posts</h2>
+    <div id="posts-list" style="margin-top: 16px;">
+      <p style="color: var(--ink-soft);">Loading...</p>
+    </div>
+  </section>
+
+<script>
+  var API_BASE = 'http://localhost:3000';
+  var postsList = document.getElementById('posts-list');
+  var form = document.getElementById('post-form');
+  var statusEl = document.getElementById('form-status');
+
+  function loadPosts() {
+    fetch(API_BASE + '/api/posts')
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (!data.success || data.posts.length === 0) {
+          postsList.innerHTML = '<p style="color: var(--ink-soft);">No posts yet.</p>';
+          return;
+        }
+
+        postsList.innerHTML = ''; // Clear "Loading..."
+
+        data.posts.forEach(function (post) {
+          var row = document.createElement('div');
+          row.className = 'admin-post';
+
+          var textWrap = document.createElement('div');
+          var titleEl = document.createElement('h3');
+          titleEl.textContent = post.title;
+          var excerptEl = document.createElement('p');
+          excerptEl.textContent = post.excerpt;
+          textWrap.appendChild(titleEl);
+          textWrap.appendChild(excerptEl);
+
+          var deleteBtn = document.createElement('button');
+          deleteBtn.className = 'btn-delete';
+          deleteBtn.textContent = 'Delete';
+          deleteBtn.addEventListener('click', function () {
+            deletePost(post._id);
+          });
+
+          row.appendChild(textWrap);
+          row.appendChild(deleteBtn);
+          postsList.appendChild(row);
+        });
+      })
+      .catch(function () {
+        postsList.innerHTML = '<p style="color: #B3261E;">Could not reach the server. Is it running?</p>';
+      });
+  }
+
+  function deletePost(id) {
+    if (!confirm('Delete this post?')) return;
+
+    fetch(API_BASE + '/api/posts/' + id, { method: 'DELETE' })
+      .then(function (res) { return res.json(); })
+      .then(function () {
+        loadPosts(); // Refresh the list after deleting
+      });
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    var payload = {
+      title: document.getElementById('title').value.trim(),
+      excerpt: document.getElementById('excerpt').value.trim(),
+    };
+
+    fetch(API_BASE + '/api/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        if (data.success) {
+          statusEl.textContent = 'Post added!';
+          statusEl.className = 'form-status success';
+          form.reset();
+          loadPosts(); // Refresh the list with the new post included
+        } else {
+          statusEl.textContent = data.error || 'Something went wrong.';
+          statusEl.className = 'form-status error';
+        }
+      })
+      .catch(function () {
+        statusEl.textContent = 'Could not reach the server.';
+        statusEl.className = 'form-status error';
+      });
+  });
+
+  loadPosts(); // Load the list as soon as the page opens
+</script>
+
+</body>
+</html>
