@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meta Ads Management — AIDigitalRank</title>
-<meta name="description" content="Profit-first Meta Ads management for Indian brands — audience testing, creative testing and reporting tied to contribution margin, not just ROAS.">
+<title>Google Ads Management — AIDigitalRank</title>
+<meta name="description" content="Profit-first Google Ads management for Indian brands — audience testing, creative testing and reporting tied to contribution margin, not just ROAS.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,6 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script defer src="../../assets/js/main.js"></script>
+<script defer src="../../assets/js/newsletter.js"></script>
 <script defer src="../../assets/js/animations.js"></script>
 </head>
 <body>
@@ -39,7 +40,9 @@
       </button>
     </div>
     <nav class="main-nav">
+      <a href="/">Home</a>
       <a href="/services/">Services</a>
+      <a href="/work/">Work</a>
       <a href="/about/">About</a>
       <a href="/blog/">Blog</a>
       <a href="/contact/" class="nav-cta">Talk to us</a>
@@ -48,6 +51,14 @@
 </header>
 
 <main>
+
+  <nav class="breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    <span class="breadcrumb-sep">/</span>
+    <a href="/services/">Services</a>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-current">Meta Ads</span>
+  </nav>
 
   <section class="page-hero">
     <div class="wrap">
@@ -143,6 +154,11 @@
         <a href="#" target="_blank" rel="noopener">LinkedIn</a>
         <a href="#" target="_blank" rel="noopener">Facebook</a>
       </div>
+      <form class="newsletter-form" id="newsletter-form">
+        <input type="email" name="email" placeholder="Your email" required>
+        <button type="submit">Subscribe</button>
+      </form>
+      <p class="newsletter-status" id="newsletter-status"></p>
     </div>
     <div class="footer-links">
       <div class="footer-col">
@@ -155,6 +171,7 @@
       <div class="footer-col">
         <span class="footer-heading">Company</span>
         <a href="/about/">About</a>
+        <a href="/work/">Work</a>
         <a href="/blog/">Blog</a>
         <a href="/contact/">Contact</a>
       </div>

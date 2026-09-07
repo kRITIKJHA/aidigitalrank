@@ -328,6 +328,54 @@ p { margin: 0; color: var(--ink-soft); }
   max-width: 44ch;
 }
 
+/* ===== Work / Case Studies page ===== */
+.work-section {
+  padding: 80px 0 96px;
+}
+
+.work-card {
+  padding: 40px 0;
+  border-top: 1px solid var(--line);
+}
+
+.work-card:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.work-industry {
+  display: block;
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.work-card h2 {
+  font-size: 26px;
+  max-width: 24ch;
+}
+
+.work-card h3 {
+  font-size: 14px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 24px;
+}
+
+.work-card p {
+  margin-top: 8px;
+  max-width: 68ch;
+  font-size: 16px;
+}
+
+.work-result {
+  color: var(--ink);
+  font-weight: 500;
+}
+
 /* ===== Breadcrumb ===== */
 .breadcrumb {
   max-width: var(--wrap);
