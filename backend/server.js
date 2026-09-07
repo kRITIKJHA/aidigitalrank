@@ -1,54 +1,195 @@
-// One-time script to populate sample case studies.
-// Run with: node seed-case-studies.js
-//
-// ⚠️ These are PLACEHOLDER case studies with made-up numbers — clearly
-// marked so you remember to replace them with real client results once
-// you have them. Never publish fabricated results as if they were real.
+require('dotenv').config(); // Loads variables from .env into process.env
 
-require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 const mongoose = require('mongoose');
-const CaseStudy = require('./models/CaseStudy');
+const Contact = require('./models/Contact'); // Our Contact model
+const Post = require('./models/Post'); // Our Post model
+const Newsletter = require('./models/Newsletter'); // Our Newsletter model
+const CaseStudy = require('./models/CaseStudy'); // Our CaseStudy model
 
-const sampleCaseStudies = [
-  {
-    title: 'Cutting CPA while scaling ad spend 3x',
-    industry: 'D2C Skincare Brand',
-    challenge: 'Ad spend was increasing month over month, but CPA was climbing right along with it — growth was happening, but margins were shrinking.',
-    solution: 'Rebuilt the campaign structure around Advantage+ testing, killed underperforming creative fast, and moved budget toward the audiences actually converting.',
-    result: 'CPA reduced by ~30% within 60 days, while spend was scaled 3x. (Placeholder numbers — replace with real results.)',
-  },
-  {
-    title: 'Fixing a tracking setup that was hiding real performance',
-    industry: 'Health Supplement Brand',
-    challenge: "Meta's reported ROAS looked strong, but Shopify revenue didn't match up — the brand couldn't tell what was actually working.",
-    solution: 'Audited the pixel and Conversions API setup, fixed duplicate and missing events, and reconciled Meta numbers against Shopify data weekly.',
-    result: 'Uncovered that true ROAS was meaningfully lower than reported, allowing budget to be reallocated toward what was actually profitable. (Placeholder — replace with real results.)',
-  },
-  {
-    title: 'A landing page rebuild that lifted conversion rate',
-    industry: 'Fashion Retailer',
-    challenge: 'Paid traffic was healthy, but the existing landing page was slow and unclear, and a lot of that traffic was leaving without converting.',
-    solution: 'Rebuilt the landing page around a single clear offer, improved load speed, and simplified the checkout path.',
-    result: 'Conversion rate improved noticeably within the first month, with no increase in ad spend. (Placeholder — replace with real results.)',
-  },
-];
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-async function seed() {
-  try {
-    await mongoose.connect(process.env.MONGODB_URI);
+// ---- Middleware ----
+app.use(cors());
+app.use(express.json());
+
+// ---- Connect to MongoDB ----
+// process.env.MONGODB_URI reads the connection string from our .env file.
+// We never write the actual string directly in this file — that's the
+// whole point of keeping secrets in .env instead of in the code.
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => {
     console.log('Connected to MongoDB ✅');
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err.message);
+  });
 
-    await CaseStudy.deleteMany({});
-    console.log('Cleared existing case studies.');
+// ---- Routes ----
 
-    await CaseStudy.insertMany(sampleCaseStudies);
-    console.log(`Inserted ${sampleCaseStudies.length} sample case studies.`);
+app.get('/', (req, res) => {
+  res.send('Hello from the AIDigitalRank backend! 🚀');
+});
 
-    process.exit(0);
-  } catch (err) {
-    console.error('Seeding failed:', err.message);
-    process.exit(1);
+// Note: this route is now `async` — saving to a database takes a little
+// time, so we use `await` to pause until it's done before responding.
+app.post('/api/contact', async (req, res) => {
+  const { name, phone, email, service, message } = req.body;
+
+  if (!name || !phone || !email || !service || !message) {
+    return res.status(400).json({
+      success: false,
+      error: 'All fields are required.',
+    });
   }
-}
 
-seed();
+  try {
+    // Contact.create() builds a new document from the Contact model
+    // AND saves it to MongoDB in one step.
+    const newContact = await Contact.create({ name, phone, email, service, message });
+
+    console.log('Saved to database:', newContact);
+
+    res.status(200).json({
+      success: true,
+      message: 'Thanks! We will get back to you shortly.',
+    });
+  } catch (err) {
+    console.error('Error saving contact:', err.message);
+    res.status(500).json({
+      success: false,
+      error: 'Something went wrong while saving your message. Please try again.',
+    });
+  }
+});
+
+// GET route — this one just reads and returns data, so no request body
+// is needed, and it doesn't need to be async in a try/catch the same way
+// a write operation does (though we still use async/await + try/catch
+// here since talking to the database is always asynchronous).
+app.get('/api/posts', async (req, res) => {
+  try {
+    // .sort({ createdAt: -1 }) means "newest first" (-1 = descending)
+    const posts = await Post.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, posts });
+  } catch (err) {
+    console.error('Error fetching posts:', err.message);
+    res.status(500).json({ success: false, error: 'Could not load posts.' });
+  }
+});
+
+// CREATE a new post — used by the admin page.
+// ⚠️ No authentication yet: anyone who knows this URL can call it.
+// This is fine for local learning/testing, but must be locked down
+// with real authentication before this site is ever made public.
+app.post('/api/posts', async (req, res) => {
+  const { title, excerpt } = req.body;
+
+  if (!title || !excerpt) {
+    return res.status(400).json({
+      success: false,
+      error: 'Title and excerpt are both required.',
+    });
+  }
+
+  try {
+    const newPost = await Post.create({ title, excerpt });
+    res.status(201).json({ success: true, post: newPost });
+  } catch (err) {
+    console.error('Error creating post:', err.message);
+    res.status(500).json({ success: false, error: 'Could not create post.' });
+  }
+});
+
+// DELETE a post by its ID — the ":id" part is a "route parameter":
+// a placeholder that matches whatever appears in that position of the
+// actual URL (e.g. /api/posts/68a1b2... becomes req.params.id).
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    const deletedPost = await Post.findByIdAndDelete(req.params.id);
+
+    if (!deletedPost) {
+      return res.status(404).json({ success: false, error: 'Post not found.' });
+    }
+
+    res.status(200).json({ success: true, message: 'Post deleted.' });
+  } catch (err) {
+    console.error('Error deleting post:', err.message);
+    res.status(500).json({ success: false, error: 'Could not delete post.' });
+  }
+});
+
+// Newsletter signup — used by the footer form on every page.
+app.post('/api/newsletter', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, error: 'Email is required.' });
+  }
+
+  try {
+    await Newsletter.create({ email });
+    res.status(201).json({ success: true, message: "Thanks! You're subscribed." });
+  } catch (err) {
+    // Error code 11000 = MongoDB's "duplicate key" error — meaning this
+    // email already has a document with `unique: true`. We treat this
+    // as a friendly success rather than an error, since from the user's
+    // point of view, "you're already subscribed" isn't really a failure.
+    if (err.code === 11000) {
+      return res.status(200).json({ success: true, message: "You're already subscribed!" });
+    }
+    console.error('Error saving newsletter signup:', err.message);
+    res.status(500).json({ success: false, error: 'Something went wrong. Please try again.' });
+  }
+});
+
+// GET all case studies — used by the /work/ page.
+app.get('/api/case-studies', async (req, res) => {
+  try {
+    const caseStudies = await CaseStudy.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, caseStudies });
+  } catch (err) {
+    console.error('Error fetching case studies:', err.message);
+    res.status(500).json({ success: false, error: 'Could not load case studies.' });
+  }
+});
+
+// CREATE a new case study — used by the admin page.
+app.post('/api/case-studies', async (req, res) => {
+  const { title, industry, challenge, solution, result } = req.body;
+
+  if (!title || !industry || !challenge || !solution || !result) {
+    return res.status(400).json({ success: false, error: 'All fields are required.' });
+  }
+
+  try {
+    const newCaseStudy = await CaseStudy.create({ title, industry, challenge, solution, result });
+    res.status(201).json({ success: true, caseStudy: newCaseStudy });
+  } catch (err) {
+    console.error('Error creating case study:', err.message);
+    res.status(500).json({ success: false, error: 'Could not create case study.' });
+  }
+});
+
+// DELETE a case study by ID
+app.delete('/api/case-studies/:id', async (req, res) => {
+  try {
+    const deleted = await CaseStudy.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'Case study not found.' });
+    }
+
+    res.status(200).json({ success: true, message: 'Case study deleted.' });
+  } catch (err) {
+    console.error('Error deleting case study:', err.message);
+    res.status(500).json({ success: false, error: 'Could not delete case study.' });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
+});
